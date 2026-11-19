@@ -1,0 +1,56 @@
+
+# Python environments
+.venv/
+.venv-ai/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# AI model weights and training cache
+models/
+unsloth_compiled_cache/
+*.safetensors
+*.gguf
+*.bin
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Original textbooks and generated data
+data/
+*.pdf
+
+# Temporary files and logs
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# IDE and editor
+.vscode/
+.idea/
+# Additional AI development files
+.venv-ai/
+unsloth_compiled_cache/
+
+# All PDF files
+*.pdf
+
+.venv-ai/
+unsloth_compiled_cache/
+__pycache__/
+
+.venv*/
+__pycache__/
+unsloth_compiled_cache/
+models/
+data/
+.env

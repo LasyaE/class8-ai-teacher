@@ -1,0 +1,6 @@
+
+PyMuPDF==1.28.2
+Pillow==11.3.0
+numpy==2.2.6
+pandas==2.2.3
+pytesseract==0.3.13
