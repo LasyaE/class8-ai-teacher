@@ -1,0 +1,54 @@
+# latest_run.json
+{
+  "timestamp": "2026-11-23T14:30:00Z",
+  "subjects_processed": [
+    {
+      "subject": "mathematics",
+      "chapters": [
+        {
+          "chapter": 1,
+          "qa_records": 43,
+          "training_examples": 38,
+          "validation_examples": 5,
+          "adapter_path": "models/finetuned/class8-mathematics-ch01-qlora",
+          "training_duration": "00:12:34",
+          "gpu_info": "NVIDIA RTX 5070 Ti, 16GB VRAM",
+          "evaluation_results": {
+            "arithmetic": {
+              "question": "What is 16/25 as a decimal?",
+              "expected": "0.64",
+              "generated": "0.64",
+              "correct": true
+            },
+            "fractions": {
+              "question": "Simplify 124/100.",
+              "expected": "31/25",
+              "generated": "31/25",
+              "correct": true
+            },
+            "percentages": {
+              "question": "What is 1/5 as a percentage?",
+              "expected": "20%",
+              "generated": "20%",
+              "correct": true
+            },
+            "simplification": {
+              "question": "Simplify 31/25.",
+              "expected": "31/25 (already simplified)",
+              "generated": "31/25 (already simplified)",
+              "correct": true
+            },
+            "conceptual": {
+              "question": "What is 1.24 as a fraction?",
+              "expected": "124/100 = 31/25",
+              "generated": "124/100 = 31/25",
+              "correct": true
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "promotion_status": "pending_quality_gates",
+  "failed_stages": []
+}

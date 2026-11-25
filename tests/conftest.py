@@ -24,7 +24,7 @@ test_data = {
             "subject": "telugu",
             "chapter_title": "సంఖ్యలు మరియు గుణికరణం",
             "start_pdf_page": 112,
-            "end_pdf,PDF_page": 125,
+            "end_pdf_page": 125,
             "source_pages": [112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125]
         }
     ],

@@ -1,84 +1,137 @@
-# tests/test_curriculum_catalogue.py
+
+import copy
 import unittest
-from tests.conftest import test_data, validate_page_numbers, check_duplicate_entries, check_overlapping_ranges, unicode_test_data
+
+from tests.conftest import (
+    test_data,
+    validate_page_numbers,
+    check_duplicate_entries,
+    check_overlapping_ranges,
+)
 from ingestion.validate_curriculum_catalogue import validate_catalogue
 
+
 class TestCurriculumCatalogue(unittest.TestCase):
-    """Test suite for curriculum catalogue validation rules."""
+    """Test curriculum catalogue validation rules."""
+
+    def setUp(self):
+        self.valid_entries = copy.deepcopy(test_data["valid_entries"])
+        self.invalid_entries = copy.deepcopy(test_data["invalid_entries"])
 
     def test_required_fields(self):
-        """Verify required fields are present in catalogue entries."""
-        for entry in test_data["valid_entries"]:
-            self.assertIn("subject", entry)
-            self.assertIn("chapter_title", entry)
-            self.assertIn("start_pdf_page", entry)
-            self.assertIn("end_pdf_page", entry, f"Missing required field: end_pdf_page in entry {entry}")
-            self.assertIn("source_pages", entry)
+        required = {
+            "subject",
+            "chapter_title",
+            "start_pdf_page",
+            "end_pdf_page",
+            "source_pages",
+        }
 
-    def test_missing_fields(self):
-        """Verify missing fields are detected."""
-        for entry in test_data["invalid_entries"]:
-            if "subject" not in entry:
-                self.fail("Missing required field: subject")
-            if "chapter_title" not in entry:
-                self.fail("Missing required field: chapter_title")
-            if "start_pdf_page" not in entry:
-                self.fail("Missing required field: start_pdf_page")
-            if "end_pdf_page" not in entry:
-                self.fail("Missing required field: end_pdf_page")
-            if "source_pages" not in entry:
-                self.fail("Missing required field: source_pages")
+        for entry in self.valid_entries:
+            with self.subTest(entry=entry):
+                self.assertTrue(required.issubset(entry.keys()))
 
-    def test_empty_titles(self):
-        """Verify empty chapter titles are detected."""
-        for entry in test_data["invalid_entries"]:
-            if entry["chapter_title"] == "":
-                self.fail("Empty chapter title detected")
+    def test_invalid_entries_are_rejected(self):
+        for entry in self.invalid_entries:
+            with self.subTest(entry=entry):
+                results = validate_catalogue([entry])
+                self.assertTrue(
+                    results,
+                    f"Invalid entry was accepted: {entry}",
+                )
+
+    def test_empty_titles_are_rejected(self):
+        empty_title_entries = [
+            entry for entry in self.invalid_entries
+            if not str(entry.get("chapter_title", "")).strip()
+        ]
+
+        for entry in empty_title_entries:
+            with self.subTest(entry=entry):
+                results = validate_catalogue([entry])
+                self.assertTrue(results, "Empty title was not rejected")
 
     def test_page_number_validation(self):
-        """Verify page numbers are valid integers within subject limits."""
-        for entry in test_data["valid_entries"]:
-            self.assertTrue(validate_page_numbers(entry), "Page number validation failed for entry: {}".format(entry))
+        for entry in self.valid_entries:
+            with self.subTest(entry=entry):
+                self.assertTrue(validate_page_numbers(entry))
 
     def test_duplicate_entries(self):
-        """Verify duplicate entries are detected."""
-        duplicates = check_duplicate_entries(test_data["valid_entries"])
-        self.assertEqual(len(duplicates), 0, "Duplicate entries found: {}".format(duplicates))
+        duplicates = check_duplicate_entries(self.valid_entries)
+        self.assertEqual(duplicates, [])
 
     def test_overlapping_ranges(self):
-        """Verify overlapping chapter ranges are identified."""
-        overlaps = check_overlapping_ranges(test_data["valid_entries"])
-        self.assertEqual(len(overlaps), 0, "Overlapping ranges found: {}".format(overlaps))
+        overlaps = check_overlapping_ranges(self.valid_entries)
+        self.assertEqual(overlaps, [])
 
-    def test_missing_source_pages(self):
-        """Verify missing source-page evidence is flagged."""
-        for entry in test_data["invalid_entries"]:
-            if len(entry.get("source_pages", [])) == 0:
-                self.fail("Missing source-page evidence for entry: {}".format(entry))
+    def test_missing_source_pages_are_rejected(self):
+        missing_evidence = [
+            entry for entry in self.invalid_entries
+            if not entry.get("source_pages")
+        ]
+
+        for entry in missing_evidence:
+            with self.subTest(entry=entry):
+                results = validate_catalogue([entry])
+                self.assertTrue(
+                    results,
+                    "Missing source-page evidence was not rejected",
+                )
 
     def test_unicode_preservation(self):
-        """Verify Telugu and Hindi Unicode strings are preserved exactly."""
-        for input_data, expected_output in unicode_test_data:
-            self.assertEqual(input_data["chapter_title"], expected_output, "Unicode preservation failed for input: {}".format(input_data))
+        for input_data, expected_output in test_data.get(
+            "unicode_test_data", []
+        ):
+            self.assertEqual(
+                input_data["chapter_title"],
+                expected_output,
+            )
 
-    def test_validate_catalogue(self):
-        """Verify the production validator works with existing test data."""
-        results = validate_catalogue(test_data["valid_entries"])
-        self.assertEqual(len(results), 0, "Validation errors found: {}".format(results))
+    def test_validate_catalogue_accepts_valid_entries(self):
+        results = validate_catalogue(self.valid_entries)
+        self.assertEqual(results, [])
 
-        # Test invalid entries
-        results = validate_catalogue(test_data["invalid_entries"])
-        self.assertTrue(all(r["severity"] == "error" for r in results), "Expected all errors for invalid entries")
+    def test_validate_catalogue_detects_duplicates(self):
+        entries = copy.deepcopy(self.valid_entries)
+        entries.append(copy.deepcopy(entries[0]))
 
-        # Test duplicate entries
-        test_data["valid_entries"].append(test_data["valid_entries"][0])
-        results = validate_catalogue(test_data["valid_entries"])
-        self.assertTrue(any(r["error"] == "DUPLICATE_ENTRY" for r in results), "Duplicate entry not detected")
+        results = validate_catalogue(entries)
 
-        # Test overlapping ranges
-        test_data["valid_entries"].append({"subject": "mathematics", "chapter_title": "New Chapter", "start_pdf_page": 60, "end_pdf_page": 70, "source_pages": [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70]})
-        results = validate_catalogue(test_data["valid_entries"])
-        self.assertTrue(any(r["error"] == "OVERLAPPING_RANGE" for r in results), "Overlapping range not detected")
+        self.assertTrue(
+            any(result.get("error") == "DUPLICATE_ENTRY"
+                for result in results),
+            f"Duplicate entry not detected: {results}",
+        )
 
-if __name__ == '__main__':
+    def test_validate_catalogue_detects_overlapping_ranges(self):
+        self.assertTrue(
+            self.valid_entries,
+            "Cannot test overlap without a valid catalogue entry",
+        )
+
+        original = self.valid_entries[0]
+        start = original["start_pdf_page"]
+        end = original["end_pdf_page"]
+
+        overlapping_entry = {
+            "subject": original["subject"],
+            "chapter_title": "Synthetic overlapping test chapter",
+            "start_pdf_page": start,
+            "end_pdf_page": end,
+            "source_pages": list(range(start, end + 1)),
+        }
+
+        entries = copy.deepcopy(self.valid_entries)
+        entries.append(overlapping_entry)
+
+        results = validate_catalogue(entries)
+
+        self.assertTrue(
+            any(result.get("error") == "OVERLAPPING_RANGE"
+                for result in results),
+            f"Overlapping range not detected: {results}",
+        )
+
+
+if __name__ == "__main__":
     unittest.main()

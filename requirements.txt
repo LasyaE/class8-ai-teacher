@@ -4,3 +4,8 @@ Pillow==11.3.0
 numpy==2.2.6
 pandas==2.2.3
 pytesseract==0.3.13
+Flask
+Flask-SQLAlchemy
+Flask-Login
+Flask-WTF
+requests

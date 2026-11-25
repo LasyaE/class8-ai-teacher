@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Teacher - Chat</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>AI Teacher Chat</h2>
+        <form method="post">
+            <select name="subject" required>
+                <option value="mathematics">Mathematics</option>
+                <option value="physical-science">Physical Science</option>
+                <option value="biological-science">Biological Science</option>
+                <option value="social-studies">Social Studies</option>
+                <option value="english">English</option>
+                <option value="telugu">Telugu</option>
+                <option value="hindi">Hindi</option>
+            </select>
+            
+            <label for="question">Question:</label>
+            <textarea id="question" name="question" required></textarea>
+            
+            <button type="submit">Ask</button>
+        </form>
+        
+        <div id="response">
+            {% if response %}
+                <h3>Answer:</h3>
+                <p>{{ response }}</p>
+                <h4>Sources:</h4>
+                <ul>
+                    {% for source in sources %}
+                        <li>{{ source.source_pdf }} - Page {{ source.page }}</li>
+                    {% endfor %}
+                </ul>
+            {% elif error %}
+                <p style="color: red;" role="alert">{{ error }}</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

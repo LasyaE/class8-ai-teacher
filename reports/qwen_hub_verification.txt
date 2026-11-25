@@ -1,0 +1,65 @@
+from huggingface_hub import HfApi
+import os
+import hashlib
+from safetensors import safe_open
+
+# Initialize Hugging Face API
+api = HfApi()
+
+# Get model metadata
+try:
+    model_info = api.model_info("Qwen/Qwen3-8B", files_metadata=True)
+    print(f"✅ Model ID: {model_info.id}")
+    print(f"✅ Commit SHA: {model_info.sha}")
+    print("\n✅ Remote Files:")
+    for file in model_info.siblings:
+        print(f"  - {file.path}")
+        if "size" in file:
+            print(f"    Size: {file.size} bytes")
+        if "lfs_size" in file:
+            print(f"    LFS Size: {file.lfs_size} bytes")
+        if "lfs_hash" in file:
+            print(f"    LFS Hash: {file.lfs_hash}")
+except Exception as e:
+    print(f"❌ Hugging Face Error: {str(e)}")
+    exit(1)
+
+# Local file verification
+local_dir = "models/Qwen3-8B-huggingface"
+local_files = {f: os.path.getsize(os.path.join(local_dir, f)) for f in os.listdir(local_dir) if os.path.isfile(os.path.join(local_dir, f))}
+
+# Compare remote and local files
+print("\n✅ Local Files:")
+for file, size in local_files.items():
+    print(f"  - {file}: {size} bytes")
+
+# Check for size mismatches
+mismatches = []
+for file, remote_size in model_info.siblings:
+    if file in local_files:
+        local_size = local_files[file]
+        if local_size != remote_size:
+            mismatches.append(f"❌ {file}: {local_size} vs {remote_size}")
+    else:
+        mismatches.append(f"❌ {file}: Missing locally")
+
+if mismatches:
+    print("\n❌ Size Mismatches:")
+    for m in mismatches:
+        print(m)
+else:
+    print("\n✅ No size mismatches detected")
+
+# Verify parameter count
+print("\n✅ Parameter Count Verification:")
+param_count = 0
+for shard_file in local_files:
+    if shard_file.endswith(".safetensors"):"""    try:
+        with safe_open(os.path.join(local_dir, shard_file), framework="pt", device="cpu") as f:
+            for tensor in f.keys():
+                param_count += f.get_tensor(tensor).numel()
+    except Exception as e:
+        print(f"❌ Shard {shard_file} error: {str(e)}")
+        exit(1)
+
+print(f"  Total Parameters: {param_count} (Expected: 8,000,000,000)")

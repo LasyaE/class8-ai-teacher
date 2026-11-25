@@ -1,0 +1,31 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Register - Class 8 AI Teacher</title>
+</head>
+<body>
+    <h2>Create your account</h2>
+
+    {% if error %}
+        <p style="color: red;">{{ error }}</p>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('register') }}">
+        <p>
+            <label for="username">Username</label><br>
+            <input type="text" id="username" name="username"
+                   required autocomplete="username">
+        </p>
+        <p>
+            <label for="password">Password</label><br>
+            <input type="password" id="password" name="password"
+                   required autocomplete="new-password">
+        </p>
+        <button type="submit">Register</button>
+    </form>
+
+    <p>Already registered? <a href="{{ url_for('login') }}">Login</a></p>
+</body>
+</html>
